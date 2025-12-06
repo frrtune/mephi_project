@@ -1,6 +1,7 @@
 """
 Конфигурация приложения
 """
+pip install python-dotenv
 import os
 from dotenv import load_dotenv
 
