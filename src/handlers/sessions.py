@@ -94,3 +94,69 @@ async def my_sessions_command(message: types.Message):
         active = "active" if s["active"] == 1 else "closed"
         lines.append(f"id={s['session_id']} user={s['user_id']} {active} created={s['created_at']} updated={s['updated_at']}")
     await message.answer("Ваши сессии:\n" + "\n".join(lines))
+
+async def session_callback_handler(callback: types.CallbackQuery):
+    data = callback.data
+    user_id = callback.from_user.id
+    s = get_active_session(_conn, user_id)
+
+    # Обработка старых callback'ов
+    if data == "end_session":
+        if not s:
+            await callback.message.answer("У вас нет активной сессии.")
+        else:
+            end_session(_conn, s["session_id"])
+            await callback.message.answer(f"🛑 Сессия {s['session_id']} завершена.")
+        await callback.answer()
+        return
+
+    if data == "clear_context":
+        if not s:
+            await callback.message.answer("У вас нет активной сессии.")
+        else:
+            clear_session_context(_conn, s["session_id"])
+            await callback.message.answer("🧹 Контекст сессии очищен.")
+        await callback.answer()
+        return
+
+    if data == "delete_session":
+        if not s:
+            await callback.message.answer("У вас нет активной сессии.")
+        else:
+            force_delete_session(_conn, s["session_id"])
+            await callback.message.answer(f"❗ Сессия {s['session_id']} удалена принудительно.")
+        await callback.answer()
+        return
+
+    # --- НОВЫЕ CALLBACK'И ДЛЯ МОРАЛЬНОЙ ПОДДЕРЖКИ ---
+    if data == "start_morale_session":
+        if s:
+            await callback.message.answer(
+                f"У вас уже есть активная сессия (ID: {s['session_id']}). "
+                f"Хотите завершить её перед началом новой? Используйте кнопку 'Завершить сессию'."
+            )
+        else:
+            session_id = create_session(_conn, user_id)
+            await callback.message.answer(
+                f"🤗 Сессия моральной поддержки создана (ID: {session_id}). "
+                f"Теперь вы можете делиться своими переживаниями. "
+                f"Нажмите 'Завершить сессию', когда почувствуете облегчение.",
+                reply_markup=session_controls_kb()
+            )
+        await callback.answer()
+        return
+
+    if data == "end_morale_session":
+         if not s:
+            await callback.message.answer("У вас нет активной сессии.")
+         else:
+            end_session(_conn, s["session_id"])
+            await callback.message.answer(
+                f"😔 Сессия моральной поддержки завершена. "
+                f"Надеюсь, вам стало чуть легче. Если понадобится, я всегда рядом. /start"
+            )
+         await callback.answer()
+         return
+
+    # Если callback.data не совпадает ни с одним известным, можно игнорировать или логировать.
+    await callback.answer("Неизвестное действие.", show_alert=True)
