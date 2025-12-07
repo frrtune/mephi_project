@@ -1,80 +1,155 @@
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from rag.retriever import retrieve_context
-from agents.llm_agent import generate_response
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_query = update.message.text
-    context_text = retrieve_context(user_query)
-    full_prompt = f"Контекст:\n{context_text}\n\nВопрос: {user_query}"
-    answer = generate_response(full_prompt)
-    await update.message.reply_text(answer)
-
-def main():
-    app = Application.builder().token("ВАШ_TELEGRAM_BOT_TOKEN").build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.run_polling()
-
+"""
+Точка входа в приложение - Telegram бот для общежитий МИФИ
+Запускает бота с двумя агентами: консультант и психолог
+"""
+import asyncio
+import logging
+import sys
 import os
-from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,  # ← обязательно импортировать
-    ContextTypes,
-    filters
-)
 
-from rag.retriever import retrieve_context
-from agents.llm_agent import generate_response
+# Добавляем src в путь для импортов
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-load_dotenv()
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# Импортируем nest_asyncio для Jupyter окружения
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+    print("✅ nest_asyncio применен для Jupyter окружения")
+except ImportError:
+    pass
 
-# === Обработка текстовых сообщений ===
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_query = update.message.text
-    context_text = retrieve_context(user_query)
-    full_prompt = f"Контекст:\n{context_text}\n\nВопрос: {user_query}"
-    answer = generate_response(full_prompt)
+from bot import MifiDormBot
+from utils.config import TELEGRAM_TOKEN, DEBUG, LOG_LEVEL, validate_config
+from database import init_database
+
+# Настройка логирования
+def setup_logging():
+    """Настройка системы логирования"""
+    log_level = getattr(logging, LOG_LEVEL.upper())
     
-    context.user_data["last_query"] = user_query
-    context.user_data["last_answer"] = answer
-
-    keyboard = [
-        [
-            InlineKeyboardButton("👍 Полезно", callback_data="feedback_good"),
-            InlineKeyboardButton("👎 Не полезно", callback_data="feedback_bad")
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers=[
+            logging.StreamHandler(),  # В консоль
+            logging.FileHandler('logs/bot.log', encoding='utf-8')  # В файл
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(answer, reply_markup=reply_markup)
+    )
+    
+    # Создаем папку для логов если её нет
+    os.makedirs('logs', exist_ok=True)
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"Логирование настроено (уровень: {LOG_LEVEL})")
+    
+    return logger
 
-# === Обработка нажатий на кнопки ===
-async def handle_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    feedback = query.data
+async def startup():
+    """Действия при запуске приложения"""
+    print("\n" + "="*50)
+    print("🏠 ЗАПУСК БОТА ДЛЯ ОБЩЕЖИТИЙ МИФИ")
+    print("="*50)
+    
+    logger = logging.getLogger(__name__)
+    
+    # Проверяем конфигурацию
+    try:
+        validate_config()
+        logger.info("✅ Конфигурация проверена")
+    except ValueError as e:
+        logger.error(f"❌ Ошибка конфигурации: {e}")
+        print(f"\n💡 Решение: Создайте файл .env в корне проекта")
+        print("   И добавьте TELEGRAM_BOT_TOKEN=ваш_токен")
+        return False
+    
+    # Проверяем наличие токена
+    if not TELEGRAM_TOKEN:
+        print("\n🔑 Токен Telegram бота не найден!")
+        print("1. Получите токен у @BotFather")
+        print("2. Добавьте в файл .env:")
+        print("   TELEGRAM_BOT_TOKEN=ваш_токен_здесь")
+        print("\nИли введите токен сейчас:")
+        token = input("TELEGRAM_TOKEN: ").strip()
+        
+        if not token:
+            logger.error("Токен не предоставлен. Завершение работы.")
+            return False
+        
+        # Временно устанавливаем токен
+        import utils.config
+        utils.config.TELEGRAM_TOKEN = token
+        logger.info("Токен установлен через ввод")
+    
+    # Инициализируем базы данных
+    logger.info("Инициализация баз данных...")
+    db_success = init_database()
+    
+    if not db_success:
+        logger.warning("Базы данных не инициализированы, но продолжаем...")
+    
+    return True
 
-    # Сохраняем в файл (можно заменить на отправку в БД)
-    log_entry = f"{feedback} | Query: {context.user_data.get('last_query', '')} | Answer: {context.user_data.get('last_answer', '')}\n"
-    with open("feedback_log.txt", "a", encoding="utf-8") as f:
-        f.write(log_entry)
+async def shutdown():
+    """Действия при завершении работы"""
+    logger = logging.getLogger(__name__)
+    logger.info("Завершение работы бота...")
+    
+    # Можно добавить закрытие соединений с БД
+    print("\n👋 Бот завершил работу")
 
-    # Убираем кнопки после выбора
-    await query.edit_message_reply_markup(reply_markup=None)
+async def main():
+    """Основная функция запуска"""
+    # Настраиваем логирование
+    logger = setup_logging()
+    
+    try:
+        # Выполняем действия при запуске
+        can_start = await startup()
+        if not can_start:
+            print("\n❌ Не удалось запустить бота")
+            return
+        
+        # Создаем и запускаем бота
+        print("\n🤖 Создание экземпляра бота...")
+        bot = MifiDormBot()
+        
+        print("\n🚀 Запуск бота...")
+        print("   Для остановки нажмите Ctrl+C")
+        print("-" * 30)
+        
+        await bot.run()
+        
+    except KeyboardInterrupt:
+        print("\n\n🛑 Остановка по запросу пользователя")
+        logger.info("Бот остановлен пользователем")
+    except ValueError as e:
+        print(f"\n❌ Ошибка: {e}")
+        logger.error(f"Ошибка запуска: {e}")
+    except Exception as e:
+        print(f"\n❌ Неожиданная ошибка: {e}")
+        logger.exception(f"Критическая ошибка: {e}")
+    finally:
+        await shutdown()
 
-# === Запуск бота ===
-def main():
-    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.add_handler(CallbackQueryHandler(handle_feedback))  # ← РЕГИСТРАЦИЯ ХЕНДЛЕРА
-
-    print("Бот запущен...")
-    app.run_polling()
+def run():
+    """Функция для запуска из других файлов"""
+    try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "event loop" in str(e):
+            # Для Jupyter/интерактивных сред
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                print("⚠️  Event loop уже запущен. Используйте await main() в Jupyter")
+            else:
+                loop.run_until_complete(main())
+        else:
+            raise
 
 if __name__ == "__main__":
-    main()
+    # Создаем папку для данных если её нет
+    os.makedirs('data', exist_ok=True)
+    
+    # Запускаем приложение
+    run()
