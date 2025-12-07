@@ -4,7 +4,16 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import ChatActions
-
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+def get_morale_support_keyboard() -> InlineKeyboardMarkup:
+    """
+    Клавиатура для режима моральной поддержки.
+    """
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Начать сессию", callback_data="start_morale_session")],
+        [InlineKeyboardButton(text="Завершить сессию", callback_data="end_morale_session")],
+    ])
+    return kb
 nest_asyncio.apply()
 
 API_TOKEN = input("Введите токен бота: ")
