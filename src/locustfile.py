@@ -1,10 +1,7 @@
-# locustfile.py
-
 from locust import HttpUser, task, between
 import random
 import os
 
-# Списки вопросов для консультанта и психолога
 consultant_questions = [
     "Какие адреса общежитий МИФИ?",
     "Сколько стоит проживание?",
@@ -24,15 +21,13 @@ emotional_questions = [
 class BotUser(HttpUser):
     """Класс пользователя для нагрузочного тестирования бота."""
 
-    # Ожидание между задачами (в секундах)
     wait_time = between(1, 5)
 
-    # Получаем токен бота из переменной окружения
     BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
     if not BOT_TOKEN:
         raise ValueError("TELEGRAM_TOKEN не установлен в переменных окружения!")
 
-    # Захардкодим chat_id для тестирования. В реальности нужно использовать разные ID.
+    # chat_id для тестирования. В реальности нужно использовать разные ID.
     CHAT_ID = os.getenv("TEST_CHAT_ID", "123456789")  # Замените на реальный ID
 
     @task(3)  # Приоритет 3: выполняется в 3 раза чаще, чем ask_psychologist
