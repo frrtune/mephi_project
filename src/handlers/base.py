@@ -4,7 +4,8 @@
 from aiogram import types
 from aiogram.filters import Command
 from llm.agents.rag_consultant_agent import RAGConsultantAgent
-
+from utils.keyboard import get_morale_support_keyboard
+from utils.session_db import get_active_session, create_session, get_conn
 # Создаем экземпляр RAG агента
 rag_agent = RAGConsultantAgent()
 
@@ -116,3 +117,29 @@ async def test_rag_command(message: types.Message):
         
     except Exception as e:
         await message.answer(f"❌ Ошибка тестирования RAG: {e}")
+
+async def morale_support_command(message: types.Message):
+    """Обработчик команды /morale_support"""
+    welcome_text = """
+🤗 *Режим моральной поддержки*
+
+Здесь вы можете поделиться своими переживаниями, стрессами или трудностями.
+Ваши сообщения будут сохраняться в сессию, чтобы я мог лучше понимать контекст.
+
+Нажмите кнопку "Начать сессию", если хотите начать (или перезапустить), или "Завершить сессию", когда почувствуете облегчение.
+    """
+
+    user_id = message.from_user.id
+    active_session = get_active_session(get_conn(), user_id)
+
+    if not active_session:
+        session_id = create_session(get_conn(), user_id)
+        status_text = f"\n\n✅ *Новая сессия создана (ID: {session_id})*"
+    else:
+        status_text = f"\n\nℹ️ *Активная сессия (ID: {active_session['session_id']})*"
+
+    await message.answer(
+        welcome_text + status_text,
+        parse_mode='Markdown',
+        reply_markup=get_morale_support_keyboard()
+    )
