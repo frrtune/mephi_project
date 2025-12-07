@@ -6,7 +6,18 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from handlers.sessions import start_session_command, session_status_command, session_callback_handler, my_sessions_command
 from handlers.support import support_command, support_callback, handle_support_message
-from utils.session_db import get_conn  # опционально, если хотите инициализировать глобально
+from utils.session_db import get_conn  
+from handlers.base import (
+    start_command,
+    help_command,
+    kostik_command,
+    timurchik_valeykin_command,
+    database_stats_command,
+    test_rag_command,
+    morale_support_command
+)
+from handlers.messages import handle_text_message, handle_session_message_aiogram
+
 
 
 from utils.config import TELEGRAM_TOKEN, BOT_COMMANDS
@@ -22,13 +33,29 @@ from handlers.messages import handle_text_message
 
 class MifiDormBot:
     """Основной класс бота для общежития МИФИ"""
-    
+    def _setup_handlers(self):
+        """Настройка обработчиков команд и сообщений"""
+        # Регистрация команд
+        self.dp.message.register(start_command, Command("start"))
+        self.dp.message.register(help_command, Command("help"))
+        self.dp.message.register(kostik_command, Command("kostik"))
+        self.dp.message.register(timurchik_valeykin_command, Command("timurchik_valeykin"))
+        self.dp.message.register(database_stats_command, Command("stats"))
+        self.dp.message.register(test_rag_command, Command("test_rag"))
+        self.dp.message.register(morale_support_command, Command("morale_support"))
+        self.dp.message.register(start_session_command, Command("session_start"))
+        self.dp.message.register(session_status_command, Command("session_status"))
+        self.dp.message.register(my_sessions_command, Command("my_sessions"))
+        self.dp.message.register(lambda msg: handle_session_message_aiogram(msg, self.bot))
+        self.dp.message.register(lambda msg: handle_text_message(msg, self.bot))
+
+        self.dp.callback_query.register(session_callback_handler)
     def __init__(self):
         self.token = TELEGRAM_TOKEN
         if not self.token:
-            # Если токен не установлен в config.py, запросим при запуске
+            
             self.token = input('Введите TELEGRAM_TOKEN: ').strip()
-            self.session_conn = get_conn()  # если вам нужно работать с ней напрямую из бота
+            self.session_conn = get_conn() 
             
         if not self.token:
             raise ValueError("TELEGRAM_TOKEN не установлен!")
@@ -40,30 +67,26 @@ class MifiDormBot:
     
     def _setup_handlers(self):
         """Настройка обработчиков команд и сообщений"""
-        # Регистрация команд
+        
         self.dp.message.register(start_command, Command("start"))
         self.dp.message.register(help_command, Command("help"))
         self.dp.message.register(kostik_command, Command("kostik"))
         self.dp.message.register(timurchik_valeykin_command, Command("timurchik_valeykin"))
         self.dp.message.register(database_stats_command, Command("stats"))
         self.dp.message.register(test_rag_command, Command("test_rag"))
-            # Сессии
         self.dp.message.register(start_session_command, Command("session_start"))
         self.dp.message.register(session_status_command, Command("session_status"))
         self.dp.message.register(my_sessions_command, Command("my_sessions"))
 
-        # Меню поддержки
         self.dp.message.register(support_command, Command("support"))
-        # Общий текстовый обработчик для поддержки (следует регистрировать *перед* общим handle_text_message,
-        # чтобы сообщения с активной сессией перехватывались здесь)
-        self.dp.message.register(handle_support_message)  # важно: ставьте этот раньше чем основной text handler
 
-        # Коллбэк для кнопок сессии и поддержки
-        self.dp.callback_query.register(session_callback_handler)  # обрабатывает end_session, clear_context, delete_session
-        self.dp.callback_query.register(support_callback)  # обрабатывает support_* callback_data
+        self.dp.message.register(handle_support_message) 
+        
+        self.dp.callback_query.register(session_callback_handler)
+        self.dp.callback_query.register(support_callback)
 
         
-        # Обработка текстовых сообщений
+
         self.dp.message.register(lambda msg: handle_text_message(msg, self.bot))
         
     
