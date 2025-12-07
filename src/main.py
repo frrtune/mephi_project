@@ -4,23 +4,12 @@
 """
 import asyncio
 import logging
-import sys
 import os
 
-# Добавляем src в путь для импортов
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Импортируем nest_asyncio для Jupyter окружения
-try:
-    import nest_asyncio
-    nest_asyncio.apply()
-    print("✅ nest_asyncio применен для Jupyter окружения")
-except ImportError:
-    pass
-
-from bot import MifiDormBot
-from utils.config import TELEGRAM_TOKEN, DEBUG, LOG_LEVEL, validate_config
-from database import init_database
+# Правильные импорты из текущего пакета
+from .bot import MifiDormBot
+from .utils.config import TELEGRAM_TOKEN, DEBUG, LOG_LEVEL, validate_config
+from .database import init_database
 
 # Настройка логирования
 def setup_logging():
@@ -77,8 +66,8 @@ async def startup():
             return False
         
         # Временно устанавливаем токен
-        import utils.config
-        utils.config.TELEGRAM_TOKEN = token
+        from .utils import config
+        config.TELEGRAM_TOKEN = token
         logger.info("Токен установлен через ввод")
     
     # Инициализируем базы данных
@@ -95,7 +84,6 @@ async def shutdown():
     logger = logging.getLogger(__name__)
     logger.info("Завершение работы бота...")
     
-    # Можно добавить закрытие соединений с БД
     print("\n👋 Бот завершил работу")
 
 async def main():
@@ -132,24 +120,10 @@ async def main():
     finally:
         await shutdown()
 
-def run():
-    """Функция для запуска из других файлов"""
-    try:
-        asyncio.run(main())
-    except RuntimeError as e:
-        if "event loop" in str(e):
-            # Для Jupyter/интерактивных сред
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                print("⚠️  Event loop уже запущен. Используйте await main() в Jupyter")
-            else:
-                loop.run_until_complete(main())
-        else:
-            raise
-
 if __name__ == "__main__":
     # Создаем папку для данных если её нет
     os.makedirs('data', exist_ok=True)
+    os.makedirs('logs', exist_ok=True)
     
     # Запускаем приложение
-    run()
+    asyncio.run(main())
