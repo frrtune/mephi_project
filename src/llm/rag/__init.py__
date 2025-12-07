@@ -1,1 +1,163 @@
 
+"""
+Пакет rag - RAG (Retrieval Augmented Generation) система для бота МИФИ
+Поиск информации в векторной базе знаний
+"""
+
+# Импортируем основные классы
+from .vector_store import VectorStore
+from .retriever import Retriever
+
+# Попробуем импортировать простую базу данных (если есть)
+try:
+    from .simple_vector_db import SimpleVectorDB
+except ImportError:
+    SimpleVectorDB = None
+    pass
+
+# Версия и метаданные пакета
+__version__ = "1.0.0"
+__author__ = "Команда МИФИ"
+__description__ = "RAG система для поиска в базе знаний общежитий МИФИ"
+
+# Список экспортируемых имен
+__all__ = [
+    "VectorStore",
+    "Retriever",
+    "SimpleVectorDB"
+]
+
+# Утилиты для работы с RAG
+def create_rag_context(query: str, documents: list, max_length: int = 1500) -> str:
+    """
+    Создание контекста для промпта из найденных документов
+    
+    Args:
+        query: Исходный запрос пользователя
+        documents: Список найденных документов
+        max_length: Максимальная длина контекста
+        
+    Returns:
+        str: Форматированный контекст
+    """
+    if not documents:
+        return "В базе знаний нет информации по данному вопросу."
+    
+    context_parts = ["📚 Релевантная информация из базы знаний МИФИ:"]
+    total_length = 0
+    
+    for i, doc in enumerate(documents, 1):
+        # Предполагаем, что документ имеет поля 'text' и 'similarity'
+        text = doc.get('text', doc.get('content', str(doc)))
+        similarity = doc.get('similarity', doc.get('score', 0.8))
+        
+        # Форматируем документ
+        doc_text = f"\n--- Документ {i} (релевантность: {similarity:.2f}) ---\n{text}"
+        
+        # Проверяем, не превысим ли лимит
+        if total_length + len(doc_text) > max_length:
+            # Добавляем только часть и прерываемся
+            remaining = max_length - total_length - 50  # -50 для "..."
+            if remaining > 100:  # Если есть место для части документа
+                doc_text = doc_text[:remaining] + "\n... [документ обрезан]"
+                context_parts.append(doc_text)
+            break
+        
+        context_parts.append(doc_text)
+        total_length += len(doc_text)
+    
+    return "\n".join(context_parts)
+
+def filter_documents_by_relevance(documents: list, threshold: float = 0.5) -> list:
+    """
+    Фильтрация документов по порогу релевантности
+    
+    Args:
+        documents: Список документов
+        threshold: Порог релевантности (0.0-1.0)
+        
+    Returns:
+        list: Отфильтрованные документы
+    """
+    filtered = []
+    
+    for doc in documents:
+        similarity = doc.get('similarity', doc.get('score', 0))
+        if similarity >= threshold:
+            filtered.append(doc)
+    
+    return filtered
+
+def get_rag_stats() -> dict:
+    """
+    Получение статистики RAG системы
+    
+    Returns:
+        dict: Статистика
+    """
+    stats = {
+        'version': __version__,
+        'description': __description__,
+        'available_components': __all__,
+        'utilities': ['create_rag_context', 'filter_documents_by_relevance'],
+        'last_update': '2024-12-15'
+    }
+    
+    return stats
+
+# Инициализация при импорте пакета
+def init_rag():
+    """Инициализация RAG системы"""
+    try:
+        print(f"✅ RAG система v{__version__} инициализирована")
+        print(f"   Компоненты: {', '.join(__all__)}")
+        
+        # Проверяем доступность основных компонентов
+        if SimpleVectorDB:
+            print(f"   Доступна простая векторная база: SimpleVectorDB")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Ошибка инициализации RAG: {e}")
+        return False
+
+# Автоматическая инициализация при импорте пакета
+if __name__ != "__main__":
+    init_rag()
+
+# Тестирование пакета
+if __name__ == "__main__":
+    print(f"Пакет RAG v{__version__}")
+    print(__description__)
+    print(f"\nДоступные компоненты:")
+    
+    for item in __all__:
+        print(f"  • {item}")
+    
+    # Тест утилит
+    print("\n🧪 Тест утилит:")
+    
+    # Тест создания контекста
+    test_documents = [
+        {'text': 'Общежитие №1: Москва, ул. Москворечье, 2к1', 'similarity': 0.9},
+        {'text': 'Стоимость: 1200-2500 рублей в месяц', 'similarity': 0.7},
+        {'text': 'Гости разрешены до 23:00', 'similarity': 0.5},
+    ]
+    
+    context = create_rag_context("адрес общежития", test_documents)
+    print("Созданный контекст:")
+    print(context[:200] + "..." if len(context) > 200 else context)
+    
+    # Тест фильтрации
+    filtered = filter_documents_by_relevance(test_documents, threshold=0.6)
+    print(f"\nДокументы с релевантностью >= 0.6: {len(filtered)} из {len(test_documents)}")
+    
+    # Статистика
+    print("\n📊 Статистика RAG:")
+    stats = get_rag_stats()
+    for key, value in stats.items():
+        if key != 'utilities':
+            print(f"  {key}: {value}")
+    
+    print("\n✅ Все тесты завершены!")
