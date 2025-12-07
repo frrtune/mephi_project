@@ -1,1 +1,137 @@
 
+"""
+Пакет llm - работа с языковыми моделями для бота МИФИ
+Включает агентов, промпты, RAG систему и клиенты API
+"""
+
+# Импортируем основные классы для удобного доступа
+from .client import LLMClient, llm_client
+from .config import LLM_CONFIG, get_agent_config
+
+# Импортируем агентов
+try:
+    from .agents import (
+        ConsultantAgent,
+        PsychologistAgent,
+        RAGConsultantAgent,
+        consultant_agent,
+        psychologist_agent,
+        rag_consultant_agent
+    )
+except ImportError:
+    # Если агенты еще не реализованы
+    pass
+
+# Импортируем промпты
+try:
+    from .prompts import (
+        get_consultant_rag_prompt,
+        get_psychologist_prompt_with_history,
+        get_welcome_message,
+        get_privacy_notice
+    )
+except ImportError:
+    pass
+
+# Импортируем RAG систему
+try:
+    from .rag import VectorStore, SimpleVectorDB
+except ImportError:
+    pass
+
+# Импортируем память для агентов
+try:
+    from .memory import SessionManager
+except ImportError:
+    pass
+
+# Версия и метаданные пакета
+__version__ = "1.0.0"
+__author__ = "Команда МИФИ"
+__description__ = "LLM компоненты для чат-бота помощника коменданта"
+
+# Список экспортируемых имен
+__all__ = [
+    # Клиенты
+    "LLMClient",
+    "llm_client",
+    
+    # Конфигурация
+    "LLM_CONFIG",
+    "get_agent_config",
+    
+    # Агенты
+    "ConsultantAgent",
+    "PsychologistAgent", 
+    "RAGConsultantAgent",
+    "consultant_agent",
+    "psychologist_agent",
+    "rag_consultant_agent",
+    
+    # Промпты
+    "get_consultant_rag_prompt",
+    "get_psychologist_prompt_with_history", 
+    "get_welcome_message",
+    "get_privacy_notice",
+    
+    # RAG система
+    "VectorStore",
+    "SimpleVectorDB",
+    
+    # Память
+    "SessionManager",
+]
+
+# Инициализация при импорте пакета
+def init_llm():
+    """Инициализация LLM компонентов"""
+    try:
+        # Проверяем наличие API ключа
+        from .config import API_KEY, BASE_URL
+        
+        if not API_KEY:
+            print("⚠️  Предупреждение: API_KEY не установлен в конфигурации")
+            print("   Установите YANDEX_CLOUD_API_KEY_1 в .env файле")
+        
+        if not BASE_URL:
+            print("⚠️  Предупреждение: BASE_URL не установлен")
+        
+        # Инициализируем глобальный клиент
+        llm_client.sdk_client  # Просто обращаемся, чтобы инициализировать
+        
+        print(f"✅ LLM пакет v{__version__} инициализирован")
+        print(f"   Модель: {llm_client.model_name}")
+        print(f"   Базовый URL: {llm_client.sdk_client.base_url}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Ошибка инициализации LLM: {e}")
+        return False
+
+# Автоматическая инициализация при импорте пакета
+if __name__ != "__main__":
+    init_llm()
+
+# Тестирование пакета
+if __name__ == "__main__":
+    print(f"Пакет llm v{__version__}")
+    print(__description__)
+    print(f"\nДоступные компоненты:")
+    
+    for item in __all__:
+        print(f"  • {item}")
+    
+    # Тест инициализации
+    print("\n🧪 Тест инициализации:")
+    success = init_llm()
+    print(f"Результат: {'✅ Успешно' if success else '❌ Ошибка'}")
+    
+    # Тест конфигурации
+    print("\n⚙️  Тест конфигурации:")
+    from .config import LLM_CONFIG
+    print(f"Конфигурация LLM загружена:")
+    print(f"  • Температура консультанта: {LLM_CONFIG.get('consultant_agent', {}).get('temperature', 'N/A')}")
+    print(f"  • Температура психолога: {LLM_CONFIG.get('psychologist_agent', {}).get('temperature', 'N/A')}")
+    
+    print("\n✅ Все тесты завершены!")
