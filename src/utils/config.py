@@ -10,7 +10,7 @@ load_dotenv()
 API_KEY = os.getenv('YANDEX_CLOUD_API_KEY_1', 'NjBiYzY1NmUtZjUxYi00OGE1LWJmYjMtNjRiMDgzZDYxOTNj.b0b3f4a34ce84437db9aacec1c69ac23')      # для основного агента
 API_KEY_RAG = os.getenv('YANDEX_CLOUD_API_KEY_2', '')  # для RAG-агента (опционально)
 BASE_URL = os.getenv('FM_API_URL', "https://foundation-models.api.cloud.ru/v1")
-MODEL_NAME = os.getenv('FM_MODEL_NAME', "openai/gpt-oss-120b")
+MODEL_NAME = os.getenv('FM_MODEL_NAME', "gpt-oss-120b")
 
 # ---------- Настройки LLM ----------
 LLM_CONFIG = {
