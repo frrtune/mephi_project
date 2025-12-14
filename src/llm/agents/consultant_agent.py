@@ -22,7 +22,7 @@ class ConsultantAgent:
 
     def answer(self, question: str) -> str:
         # получаем контекст
-        contexts = self.vector_store.similarity_search(question, k=3)
+        contexts = self.vector_store.similarity_search(question, k=1000)
 
         prompt = (
             "Контекст:\n" +

@@ -5,7 +5,7 @@ class VectorStore:
         # Загружаем тексты о МИФИ
         self.docs = MEPHI_FACTS
 
-    def similarity_search(self, query: str, k: int = 3):
+    def similarity_search(self, query: str, k: int = 7):
         # Заглушка: возвращает первые k документов (можно заменить на вычисление эмбеддингов)
         return self.docs[:k]
 
