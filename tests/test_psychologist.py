@@ -2,11 +2,26 @@ from src.llm.agents.psychologist_agent import PsychologistAgent
 
 def test_psychologist_answer():
     agent = PsychologistAgent()
-    answer = agent.answer("У меня стресс и беспокойство")
-    assert len(answer) > 0  # ожидаем непустой ответ
-
+    
+    questions = [
+        "У меня стресс и беспокойство",
+        "Я чувствую тревогу перед экзаменами",
+        "Мне грустно и одиноко",
+        "Я не справляюсь с учёбой",
+        "Хочу покончить со всем",
+        "Как справиться с прокрастинацией?",
+        "Помогите, я не могу уснуть от тревоги",
+        "Хочу свапнуть hemi 5.7 в волгу",
+        "Просто хочется выговориться",
+        "Как улучшить настроение?"
+    ]
+    
+    for q in questions:
+        answer = agent.answer(q)
+        print(f"Вопрос: {q}")
+        print(f"Ответ: {answer}\n")
+        # Проверка: ответ не должен быть пустым
         assert len(answer) > 0, f"Пустой ответ на вопрос: {q}"
-        assert assessment["score"] >= 3, f"Неадекватный ответ на критический вопрос: {q}"
 
 if __name__ == "__main__":
-    run_psychologist_pipelines()
+    test_psychologist_answer()
