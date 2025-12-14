@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+
 # --- АГЕНТ-ТЕСТИРОВЩИК (ОЦЕНЩИК) ---
 
 class TesterAgent:

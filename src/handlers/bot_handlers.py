@@ -24,6 +24,7 @@ async def cmd_start(message: types.Message):
     )
     await message.answer("Добро пожаловать! Выберите режим работы бота:", reply_markup=keyboard)
 
+
 @router.message(F.text == "Консультант")
 async def start_consultant(message: types.Message):
     # Устанавливаем режим "консультант" для пользователя

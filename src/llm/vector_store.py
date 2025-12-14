@@ -8,3 +8,4 @@ class VectorStore:
     def similarity_search(self, query: str, k: int = 3):
         # Заглушка: возвращает первые k документов (можно заменить на вычисление эмбеддингов)
         return self.docs[:k]
+

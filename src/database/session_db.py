@@ -31,6 +31,8 @@ class SessionDB:
         cursor.execute("REPLACE INTO sessions (user_id, mode) VALUES (?, ?)", (user_id, mode))
         self.conn.commit()
 
+
+
     def get_mode(self, user_id: int) -> str:
         cursor = self.conn.cursor()
         cursor.execute("SELECT mode FROM sessions WHERE user_id = ?", (user_id,))

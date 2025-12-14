@@ -5,3 +5,4 @@ def test_vector_store_contains_data():
     docs = vs.similarity_search("институт")
     assert isinstance(docs, list)
     assert len(docs) == min(3, len(vs.docs))
+

@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.INFO, filename='bot.log',
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+
 # Регистрируем маршруты
 dp.include_router(bot_router)
 

@@ -11,3 +11,4 @@ class RAG:
         result = self.llm.generate([{"role": "user", "content": prompt}])
         return result.generations[0][0].text.strip()
 
+

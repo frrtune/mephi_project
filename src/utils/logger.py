@@ -7,3 +7,4 @@ def init_logger():
         filename="bot.log",
         filemode="a"
     )
+

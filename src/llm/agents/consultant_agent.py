@@ -17,6 +17,7 @@ class ConsultantAgent:
             temperature=0.7,
         )
 
+
         self.vector_store = VectorStore()
 
     def answer(self, question: str) -> str:
