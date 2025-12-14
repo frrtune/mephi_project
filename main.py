@@ -7,7 +7,6 @@ from aiogram import Bot, Dispatcher
 from src.handlers.bot_handlers import router as bot_router
 
 TOKEN = os.getenv("BOT_TOKEN")
-API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, filename='bot.log',

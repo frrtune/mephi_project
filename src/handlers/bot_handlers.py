@@ -37,12 +37,6 @@ async def start_psychologist(message: types.Message):
     db.set_mode(message.from_user.id, 'psychologist')
     await message.answer("Режим психолога активирован. Расскажите, что вас беспокоит.")
 
-@router.message(Command("kostik"))
-async def start_kostik(message: types.Message):
-    await message.answer("Это команда костя, которая ничего не делает. я просто её написал, потому что сижу на дискре.")
-
-
-
 @router.message()
 async def handle_all(message: types.Message):
     user_id = message.from_user.id
