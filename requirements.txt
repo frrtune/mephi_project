@@ -3,4 +3,4 @@ langchain
 openai
 python-dotenv
 pytest
-
+langchain-openai
