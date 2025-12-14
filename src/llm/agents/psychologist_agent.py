@@ -24,6 +24,7 @@ class PsychologistAgent:
     """
 
     def __init__(self):
+
         # Используем конфигурацию с Cloud.ru, как в вашем исходном коде
         # Примечание: Убедитесь, что проблема с ошибкой 403 решена (VPN/ключ).
         self.llm = ChatOpenAI(
