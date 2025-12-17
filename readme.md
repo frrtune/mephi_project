@@ -1,6 +1,6 @@
 # Ассистент коменданта общежития МИФИ
 
-Телеграм-бот на Python 3.9+ с использованием aiogram:contentReference[oaicite:3]{index=3} и LangChain (архитектура RAG):contentReference[oaicite:4]{index=4}. 
+Телеграм-бот на Python 3.9+ с использованием aiogram и LangChain (архитектура RAG):
 - **Язык:** Python 3.9+  
 - **Фреймворк:** aiogram  
 - **LLM:** Foundation Models API от Cloud.ru (OpenAI-совместимый):contentReference[oaicite:5]{index=5}  
