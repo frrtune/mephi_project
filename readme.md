@@ -3,7 +3,7 @@
 Телеграм-бот на Python 3.9+ с использованием aiogram и LangChain (архитектура RAG):
 - **Язык:** Python 3.9+  
 - **Фреймворк:** aiogram  
-- **LLM:** Foundation Models API от Cloud.ru (OpenAI-совместимый):contentReference[oaicite:5]{index=5}  
+- **LLM:** Foundation Models API от Cloud.ru (OpenAI-совместимый)
 - **БД:** SQLite для хранения сессий и истории.
 
 ## Установка и запуск
